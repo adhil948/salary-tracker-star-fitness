@@ -94,36 +94,122 @@ function handleFileImport(event) {
 const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyE9YTFLvYC3BUOlqhhI1xkfbdlMwpieeOeK4hy0NoNZj-OUVqhL6S0NB-DJXPb-Q8PvQ/exec"; // Replace with your Apps Script URL
 
 // For GET requests (restore) - use JSONP
-function restoreFromCloud() {
-  return new Promise((resolve, reject) => {
-    const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
-    const script = document.createElement('script');
+// Working restore function
+async function restoreFromCloud() {
+  try {
+    console.log("Starting cloud restore...");
     
-    window[callbackName] = function(data) {
-      delete window[callbackName];
-      document.body.removeChild(script);
+    // Use JSONP for restore
+    const result = await new Promise((resolve, reject) => {
+      const callbackName = 'restoreCallback_' + Date.now();
+      const script = document.createElement('script');
       
-      if (data.error) {
-        reject(new Error(data.error));
-        return;
-      }
-      
-      // Process the data
-      const restoredData = data.entries ? data : {
-        entries: data.entries || [],
-        employees: data.employees || []
+      window[callbackName] = function(data) {
+        console.log("Received data:", data);
+        delete window[callbackName];
+        document.body.removeChild(script);
+        resolve(data);
       };
 
-      entries = restoredData.entries || [];
-      employees = restoredData.employees || [];
-      localStorage.setItem("salaryData", JSON.stringify(restoredData));
-      
-      resolve(restoredData);
-    };
+      // Add error handling
+      script.onerror = () => {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        reject(new Error('Failed to load backup data'));
+      };
 
-    script.src = CLOUD_URL + '?callback=' + callbackName;
-    document.body.appendChild(script);
-  });
+      script.src = CLOUD_URL + '?callback=' + callbackName;
+      document.body.appendChild(script);
+    });
+
+    console.log("Parsed result:", result);
+
+    // Check if we got valid data
+    if (!result || Object.keys(result).length === 0) {
+      alert("⚠️ No backup found in cloud");
+      return;
+    }
+
+    if (result.error) {
+      alert("❌ Error: " + result.error);
+      return;
+    }
+
+    // Handle the data structure
+    let restoredEntries = [];
+    let restoredEmployees = [];
+
+    if (result.entries && result.employees) {
+      // New format with entries and employees
+      restoredEntries = result.entries;
+      restoredEmployees = result.employees;
+    } else if (Array.isArray(result)) {
+      // Old format - just entries array
+      restoredEntries = result;
+      // Try to get employees from localStorage as fallback
+      const localData = JSON.parse(localStorage.getItem("salaryData") || "{}");
+      restoredEmployees = localData.employees || [];
+    } else {
+      // Unknown format
+      alert("❌ Invalid backup data format");
+      return;
+    }
+
+    // Update global variables
+    entries = restoredEntries;
+    employees = restoredEmployees;
+
+    // Save to localStorage
+    const saveData = {
+      entries: entries,
+      employees: employees,
+      restoredDate: new Date().toISOString()
+    };
+    localStorage.setItem("salaryData", JSON.stringify(saveData));
+
+    // Update UI
+    loadEmployees();
+    
+    alert(`✅ Data restored successfully!\nEntries: ${entries.length}\nEmployees: ${employees.length}`);
+    
+  } catch (err) {
+    console.error("Restore error:", err);
+    alert("❌ Failed to restore from cloud: " + err.message);
+  }
+}
+
+// Keep your existing upload function (it's working)
+async function uploadToCloud() {
+  try {
+    const data = {
+      entries,
+      employees,
+      exportDate: new Date().toISOString(),
+      app: "Star Fitness Salary Tracker",
+      version: "1.1"
+    };
+    
+    // Use a CORS proxy for POST requests
+    const proxyUrl = 'https://corsproxy.io/?';
+    const response = await fetch(proxyUrl + encodeURIComponent(CLOUD_URL), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      alert("✅ " + result.message);
+    } else {
+      throw new Error(result.error);
+    }
+  } catch (err) {
+    console.error("Upload error:", err);
+    alert("❌ Failed to upload to cloud: " + err.message);
+  }
 }
 
 // For POST requests (upload) - use a proxy
@@ -688,6 +774,7 @@ function clearAllData() {
     }
 
 }
+
 
 
 
