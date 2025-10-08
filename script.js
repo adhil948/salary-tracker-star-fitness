@@ -103,40 +103,61 @@ async function uploadToCloud() {
       version: "1.1"
     };
     
+    // Use URLSearchParams instead of JSON for better compatibility
+    const formData = new URLSearchParams();
+    formData.append('data', JSON.stringify(data));
+    
     const res = await fetch(CLOUD_URL, {
       method: "POST",
-      body: JSON.stringify(data),
-      headers: { "Content-Type": "application/json" }
+      body: formData,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
     });
 
-    const text = await res.text();
-    alert("✅ " + text);
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
+    const result = await res.json();
+    alert("✅ " + result.message);
   } catch (err) {
-    console.error(err);
-    alert("❌ Failed to upload to cloud");
+    console.error("Upload error:", err);
+    alert("❌ Failed to upload to cloud: " + err.message);
   }
 }
-
 
 async function restoreFromCloud() {
   try {
     const res = await fetch(CLOUD_URL);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
     const data = await res.json();
 
-    if (Object.keys(data).length === 0) {
+    // Check if we got an empty response or error
+    if (!data || Object.keys(data).length === 0 || data.error) {
       alert("⚠️ No backup found in cloud");
       return;
     }
 
-    entries = data.entries || [];
-    employees = data.employees || [];
-    localStorage.setItem("salaryData", JSON.stringify(data));
+    // Handle both direct data and nested data structure
+    const restoredData = data.entries ? data : {
+      entries: data.entries || [],
+      employees: data.employees || []
+    };
+
+    entries = restoredData.entries || [];
+    employees = restoredData.employees || [];
+    localStorage.setItem("salaryData", JSON.stringify(restoredData));
     
     alert("✅ Data restored from cloud!");
     loadEmployees();
   } catch (err) {
-    console.error(err);
-    alert("❌ Failed to restore from cloud");
+    console.error("Restore error:", err);
+    alert("❌ Failed to restore from cloud: " + err.message);
   }
 }
 
@@ -637,5 +658,6 @@ function clearAllData() {
     }
 
 }
+
 
 
