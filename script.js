@@ -9,21 +9,42 @@ const airtableConfig = {
 };
 
 // ========== INITIALIZATION ==========
+// ========== INITIALIZATION ==========
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('monthSelector').value = currentMonth;
+    // Safely initialize only existing elements
+    const monthSelector = document.getElementById('monthSelector');
+    const entryForm = document.getElementById('entryForm');
+    const fileInput = document.getElementById('fileInput');
+    const uploadCloudBtn = document.getElementById('uploadCloudBtn');
+    const restoreCloudBtn = document.getElementById('restoreCloudBtn');
+    
+    if (monthSelector) {
+        monthSelector.value = currentMonth;
+        monthSelector.addEventListener('change', loadEntries);
+    }
+    
+    if (entryForm) {
+        entryForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            addEntry();
+        });
+    }
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileImport);
+    }
+    
+    if (uploadCloudBtn) {
+        uploadCloudBtn.addEventListener('click', uploadToCloud);
+    }
+    
+    if (restoreCloudBtn) {
+        restoreCloudBtn.addEventListener('click', restoreFromCloud);
+    }
+    
     document.getElementById('entryDate').valueAsDate = new Date();
     loadEmployeeList();
     loadEntries();
-    
-    document.getElementById('entryForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        addEntry();
-    });
-
-    document.getElementById('fileInput').addEventListener('change', handleFileImport);
-    document.getElementById('monthSelector').addEventListener('change', loadEntries);
-    document.getElementById('uploadCloudBtn').addEventListener('click', uploadToCloud);
-document.getElementById('restoreCloudBtn').addEventListener('click', restoreFromCloud);
 });
 
 
@@ -159,16 +180,13 @@ async function restoreFromCloud() {
     entries = restoredEntries;
     employees = restoredEmployees;
 
-    // Save to localStorage
-    const saveData = {
-      entries: entries,
-      employees: employees,
-      restoredDate: new Date().toISOString()
-    };
-    localStorage.setItem("salaryData", JSON.stringify(saveData));
+    // Save to localStorage using the correct keys
+    localStorage.setItem("salaryEntries", JSON.stringify(entries));
+    localStorage.setItem("salaryEmployees", JSON.stringify(employees));
 
-    // Update UI
-    loadEmployees();
+    // Update UI - FIXED: Use loadEmployeeList() instead of loadEmployees()
+    loadEmployeeList();
+    loadEntries();
     
     alert(`✅ Data restored successfully!\nEntries: ${entries.length}\nEmployees: ${employees.length}`);
     
@@ -177,7 +195,6 @@ async function restoreFromCloud() {
     alert("❌ Failed to restore from cloud: " + err.message);
   }
 }
-
 // Keep your existing upload function (it's working)
 async function uploadToCloud() {
   try {
@@ -774,6 +791,7 @@ function clearAllData() {
     }
 
 }
+
 
 
 
