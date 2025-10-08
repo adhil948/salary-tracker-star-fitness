@@ -94,28 +94,23 @@ function handleFileImport(event) {
 const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyE9YTFLvYC3BUOlqhhI1xkfbdlMwpieeOeK4hy0NoNZj-OUVqhL6S0NB-DJXPb-Q8PvQ/exec"; // Replace with your Apps Script URL
 
 async function uploadToCloud() {
+  const data = { entries, employees, exportDate: new Date().toISOString(), app: "Star Fitness Salary Tracker", version: "1.1" };
+
   try {
-    const data = {
-      entries,
-      employees,
-      exportDate: new Date().toISOString(),
-      app: "Star Fitness Salary Tracker",
-      version: "1.1"
-    };
-    
-    const res = await fetch(CLOUD_URL, {
+    const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(CLOUD_URL)}`, {
       method: "POST",
       body: JSON.stringify(data),
       headers: { "Content-Type": "application/json" }
     });
 
-    const text = await res.text();
+    const text = await response.text();
     alert("✅ " + text);
-  } catch (err) {
-    console.error(err);
-    alert("❌ Failed to upload to cloud");
+  } catch (error) {
+    console.error(error);
+    alert("❌ Upload failed (CORS issue)");
   }
 }
+
 
 async function restoreFromCloud() {
   try {
@@ -636,4 +631,5 @@ function clearAllData() {
     }
 
 }
+
 
