@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Star Fitness Salary Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="no-print">
+        <h1>Star Fitness Salary Tracker</h1>
+        
+        <div id="statusMessage" class="status"></div>
+
+        <div class="section backup-section">
+            <h3>💾 Data Backup & Restore</h3>
+            <p><strong>Always backup your data to avoid loss!</strong></p>
+            <div>
+                <button onclick="exportData()">📤 Export Backup File</button>
+                <button onclick="importData()">📥 Import Backup File</button>
+            </div>
+        </div>
+
+        <div class="section airtable-section">
+            <h3>☁️ Airtable Auto-Backup</h3>
+            <div style="margin: 15px 0;">
+                <input type="text" id="airtableApiKey" placeholder="Airtable API Key" style="width: 100%; max-width: 400px; padding: 8px; margin: 5px 0;">
+                <input type="text" id="airtableBaseId" placeholder="Airtable Base ID" style="width: 100%; max-width: 400px; padding: 8px; margin: 5px 0;">
+                <button onclick="saveAirtableConfig()" style="background: #2196F3;">💾 Save Airtable Settings</button>
+                <button onclick="backupToAirtable()" style="background: #FF9800;">📤 Backup to Airtable</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>👥 Employee Management</h3>
+            <div>
+                <input type="text" id="newEmployeeName" placeholder="New employee name">
+                <select id="newEmployeePaymentType">
+                    <option value="daily">Daily Wage</option>
+                    <option value="piece">Piece Rate</option>
+                </select>
+                <input type="number" id="newEmployeeOTRate" placeholder="OT rate per hour" value="112.5" step="0.1">
+                <button onclick="addEmployee()">Add Employee</button>
+            </div>
+            
+            <div>
+                <label>Select Employee: 
+                    <select id="employeeSelect" onchange="loadEmployeeSettings()">
+                        <option value="">-- Select Employee --</option>
+                    </select>
+                </label>
+                <label>Month: <input type="month" id="monthSelector"></label>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h3>🗓️ Bulk Daily Entry</h3>
+            <div>
+                <label>Select Date for Bulk Entry: <input type="date" id="bulkEntryDate"></label>
+                <button onclick="loadBulkEntryForm()">Load Employees</button>
+            </div>
+            <div id="bulkEntryFormContainer" style="margin-top: 15px;">
+                </div>
+        </div>
+
+        <div class="section" id="wageSettingsSection" style="display: none;">
+            <h3>💰 Wage Settings for <span id="currentEmployeeName"></span></h3>
+            <div>
+                <label id="dailyWageLabel">Daily Wage: <input type="number" id="dailyWage" value="900"></label>
+                <label>OT Rate per hour: <input type="number" id="otRate" value="112.5" step="0.1"></label>
+                <label>Old Balance: <input type="number" id="oldBalance" value="0"></label>
+                <button onclick="saveEmployeeSettings()">Save Settings</button>
+            </div>
+            <div id="pieceRateManagement" style="display: none; margin-top: 20px;">
+                <h4>Manage Pieces and Prices</h4>
+                <div id="pieceListContainer"></div>
+                <div style="margin-top: 10px;">
+                    <input type="text" id="newPieceName" placeholder="Piece/Work Name">
+                    <input type="number" id="newPiecePrice" placeholder="Price per piece">
+                    <button onclick="addPiece()">Add Piece</button>
+                </div>
+            </div>
+        </div>
+
+<div class="section">
+    <h3>📝 Add Daily Entry</h3>
+    <form id="entryForm">
+        <table>
+            <tr>
+                <th>Date</th>
+                <th>Work Description</th>
+                <th>Shift</th> <th>OT Hours</th>
+                <th id="pieceNameHeader">Piece Name</th> <th id="piecesFinishedHeader">Pieces Finished</th> <th>Status</th>
+                <th>Salary/Advance</th>
+                <th>Advance Date</th> <th>Notes</th>
+                <th>Action</th>
+            </tr>
+            <tr>
+                <td><input type="date" id="entryDate" required></td>
+                <td><input type="text" id="workDescription" placeholder="e.g., Assembly"></td>
+                <td> <select id="shift">
+                        <option value="">None</option>
+                        <option value="1">Shift 1</option>
+                        <option value="2">Shift 2</option>
+                    </select>
+                </td>
+                <td><input type="number" id="otHours" step="0.01" min="0" value="0"></td>
+                <td id="pieceNameCell"><select id="pieceNameSelect"></select></td> <td id="piecesFinishedCell"><input type="number" id="piecesFinished" min="0" value="0"></td> <td>
+                    <select id="status">
+                        <option value="Present">Present</option>
+                        <option value="Absent">Absent</option>
+                        <option value="Weekly Off">Weekly Off</option>
+                        <option value="Holiday">Holiday</option>
+                    </select>
+                </td>
+                <td><input type="number" id="salaryAdvance" min="0" value="0"></td>
+                <td><input type="date" id="advanceDate"></td> <td><input type="text" id="notes" placeholder="Food, etc."></td>
+                <td><button type="submit">Add Entry</button></td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+        <button onclick="printReport()">🖨️ Generate & Print Report</button>
+        <button onclick="clearAllData()" style="background: #dc3545;">🗑️ Clear All Data</button>
+        <hr>
+    </div>
+
+    <div class="no-print">
+        <h3>Current Entries for <span id="displayEmployeeName"></span></h3>
+        <div id="entriesList"></div>
+    </div>
+
+    <div id="printReport" style="display: none;"></div>
+
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+    <script src="script.js"></script>
+</body>
+</html>
