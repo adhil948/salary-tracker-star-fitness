@@ -89,10 +89,54 @@ function handleFileImport(event) {
     event.target.value = '';
 }
 
-// ========== AIRTABLE FUNCTIONS (Unchanged) ==========
-// These functions are also unchanged and should be included.
-function saveAirtableConfig() { /* ... your existing code ... */ }
-async function backupToAirtable() { /* ... your existing code ... */ }
+const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyE9YTFLvYC3BUOlqhhI1xkfbdlMwpieeOeK4hy0NoNZj-OUVqhL6S0NB-DJXPb-Q8PvQ/exec"; // Replace with your Apps Script URL
+
+async function uploadToCloud() {
+  try {
+    const data = {
+      entries,
+      employees,
+      exportDate: new Date().toISOString(),
+      app: "Star Fitness Salary Tracker",
+      version: "1.1"
+    };
+    
+    const res = await fetch(CLOUD_URL, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const text = await res.text();
+    alert("✅ " + text);
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to upload to cloud");
+  }
+}
+
+async function restoreFromCloud() {
+  try {
+    const res = await fetch(CLOUD_URL);
+    const data = await res.json();
+
+    if (Object.keys(data).length === 0) {
+      alert("⚠️ No backup found in cloud");
+      return;
+    }
+
+    entries = data.entries || [];
+    employees = data.employees || [];
+    localStorage.setItem("salaryData", JSON.stringify(data));
+    
+    alert("✅ Data restored from cloud!");
+    loadEmployees();
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to restore from cloud");
+  }
+}
+
 
 
 // ========== EMPLOYEE MANAGEMENT FUNCTIONS ==========
@@ -588,4 +632,5 @@ function clearAllData() {
         saveEmployees();
         location.reload();
     }
+
 }
