@@ -21,15 +21,12 @@
             </div>
         </div>
 
-        <div class="section airtable-section">
-            <h3>☁️ Airtable Auto-Backup</h3>
-            <div style="margin: 15px 0;">
-                <input type="text" id="airtableApiKey" placeholder="Airtable API Key" style="width: 100%; max-width: 400px; padding: 8px; margin: 5px 0;">
-                <input type="text" id="airtableBaseId" placeholder="Airtable Base ID" style="width: 100%; max-width: 400px; padding: 8px; margin: 5px 0;">
-                <button onclick="saveAirtableConfig()" style="background: #2196F3;">💾 Save Airtable Settings</button>
-                <button onclick="backupToAirtable()" style="background: #FF9800;">📤 Backup to Airtable</button>
-            </div>
-        </div>
+<div class="section backup-section">
+  <h3>☁️ Cloud Backup</h3>
+  <button onclick="uploadToCloud()">☁️ Upload Backup to Cloud</button>
+  <button onclick="restoreFromCloud()">☁️ Restore Backup from Cloud</button>
+</div>
+
 
         <div class="section">
             <h3>👥 Employee Management</h3>
@@ -137,4 +134,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>
