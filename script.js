@@ -93,6 +93,40 @@ function handleFileImport(event) {
 
 const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyE9YTFLvYC3BUOlqhhI1xkfbdlMwpieeOeK4hy0NoNZj-OUVqhL6S0NB-DJXPb-Q8PvQ/exec"; // Replace with your Apps Script URL
 
+// For GET requests (restore) - use JSONP
+function restoreFromCloud() {
+  return new Promise((resolve, reject) => {
+    const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+    const script = document.createElement('script');
+    
+    window[callbackName] = function(data) {
+      delete window[callbackName];
+      document.body.removeChild(script);
+      
+      if (data.error) {
+        reject(new Error(data.error));
+        return;
+      }
+      
+      // Process the data
+      const restoredData = data.entries ? data : {
+        entries: data.entries || [],
+        employees: data.employees || []
+      };
+
+      entries = restoredData.entries || [];
+      employees = restoredData.employees || [];
+      localStorage.setItem("salaryData", JSON.stringify(restoredData));
+      
+      resolve(restoredData);
+    };
+
+    script.src = CLOUD_URL + '?callback=' + callbackName;
+    document.body.appendChild(script);
+  });
+}
+
+// For POST requests (upload) - use a proxy
 async function uploadToCloud() {
   try {
     const data = {
@@ -103,64 +137,60 @@ async function uploadToCloud() {
       version: "1.1"
     };
     
-    // Use URLSearchParams instead of JSON for better compatibility
-    const formData = new URLSearchParams();
-    formData.append('data', JSON.stringify(data));
-    
-    const res = await fetch(CLOUD_URL, {
-      method: "POST",
-      body: formData,
+    // Method 1: Use a CORS proxy
+    const proxyUrl = 'https://corsproxy.io/?';
+    const response = await fetch(proxyUrl + encodeURIComponent(CLOUD_URL), {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      }
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
     });
 
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
+    const result = await response.json();
     
-    const result = await res.json();
-    alert("✅ " + result.message);
+    if (result.success) {
+      alert("✅ " + result.message);
+    } else {
+      throw new Error(result.error);
+    }
   } catch (err) {
     console.error("Upload error:", err);
-    alert("❌ Failed to upload to cloud: " + err.message);
+    
+    // Method 2: Fallback - open in new window
+    const fallback = confirm("❌ Direct upload failed. Would you like to try an alternative method?");
+    if (fallback) {
+      uploadViaForm();
+    }
   }
 }
 
-async function restoreFromCloud() {
-  try {
-    const res = await fetch(CLOUD_URL);
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    
-    const data = await res.json();
-
-    // Check if we got an empty response or error
-    if (!data || Object.keys(data).length === 0 || data.error) {
-      alert("⚠️ No backup found in cloud");
-      return;
-    }
-
-    // Handle both direct data and nested data structure
-    const restoredData = data.entries ? data : {
-      entries: data.entries || [],
-      employees: data.employees || []
-    };
-
-    entries = restoredData.entries || [];
-    employees = restoredData.employees || [];
-    localStorage.setItem("salaryData", JSON.stringify(restoredData));
-    
-    alert("✅ Data restored from cloud!");
-    loadEmployees();
-  } catch (err) {
-    console.error("Restore error:", err);
-    alert("❌ Failed to restore from cloud: " + err.message);
-  }
+// Fallback method using form submission
+function uploadViaForm() {
+  const data = {
+    entries,
+    employees,
+    exportDate: new Date().toISOString(),
+    app: "Star Fitness Salary Tracker", 
+    version: "1.1"
+  };
+  
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = CLOUD_URL;
+  form.target = '_blank';
+  
+  const input = document.createElement('input');
+  input.name = 'data';
+  input.value = JSON.stringify(data);
+  form.appendChild(input);
+  
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
+  
+  alert("📤 Opening backup page... Please wait a moment for the upload to complete.");
 }
-
 
 
 // ========== EMPLOYEE MANAGEMENT FUNCTIONS ==========
@@ -658,6 +688,7 @@ function clearAllData() {
     }
 
 }
+
 
 
 
