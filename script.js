@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('fileInput').addEventListener('change', handleFileImport);
     document.getElementById('monthSelector').addEventListener('change', loadEntries);
+    document.getElementById('uploadCloudBtn').addEventListener('click', uploadToCloud);
+document.getElementById('restoreCloudBtn').addEventListener('click', restoreFromCloud);
 });
 
 
@@ -634,3 +636,4 @@ function clearAllData() {
     }
 
 }
+
