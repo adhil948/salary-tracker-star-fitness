@@ -54,15 +54,15 @@
             </div>
         </div>
         
-        <div class="section">
-            <h3>🗓️ Bulk Daily Entry</h3>
-            <div>
-                <label>Select Date for Bulk Entry: <input type="date" id="bulkEntryDate"></label>
-                <button onclick="loadBulkEntryForm()">Load Employees</button>
-            </div>
-            <div id="bulkEntryFormContainer" style="margin-top: 15px;">
-                </div>
-        </div>
+<div class="section">
+    <h3>🗓️ Bulk Daily Entry</h3>
+    <div>
+        <label>Select Date for Bulk Entry: <input type="date" id="bulkEntryDate"></label>
+        <button onclick="loadBulkEntryForm()">Load Daily Employees</button>
+        <button onclick="testBulkSave()" style="background: #ffc107; color: black;">🧪 Test Bulk Save</button>
+    </div>
+    <div id="bulkEntryFormContainer" style="margin-top: 15px;"></div>
+</div>
 
         <div class="section" id="wageSettingsSection" style="display: none;">
             <h3>💰 Wage Settings for <span id="currentEmployeeName"></span></h3>
@@ -105,7 +105,11 @@
                         <option value="2">Shift 2</option>
                     </select>
                 </td>
-                <td><input type="number" id="otHours" step="0.01" min="0" value="0"></td>
+<td>
+    <input type="text" id="otHours" placeholder="1.30 = 1h 30m" value="0" 
+           onblur="convertOThours(this)" style="width: 80px;">
+    <br><small>Enter as 1.30 = 1h 30m</small>
+</td>
                 <td id="pieceNameCell"><select id="pieceNameSelect"></select></td> <td id="piecesFinishedCell"><input type="number" id="piecesFinished" min="0" value="0"></td> <td>
                     <select id="status">
                         <option value="Present">Present</option>
@@ -140,5 +144,4 @@
 </body>
 
 </html>
-
 
