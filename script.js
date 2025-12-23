@@ -2,11 +2,10 @@
 let entries = JSON.parse(localStorage.getItem('salaryEntries')) || [];
 let employees = JSON.parse(localStorage.getItem('salaryEmployees')) || [];
 let currentMonth = new Date().toISOString().slice(0, 7);
+let editingEntryId = null;
 
-const airtableConfig = {
-    apiKey: localStorage.getItem('airtableApiKey') || '',
-    baseId: localStorage.getItem('airtableBaseId') || '',
-};
+
+
 
 // ========== UTILITY FUNCTIONS ==========
 function saveEntries() {
@@ -28,6 +27,39 @@ function loadEmployeeList() {
         select.appendChild(option);
     });
     select.value = currentVal;
+}
+function deleteEmployee() {
+    const employeeId = document.getElementById('employeeSelect').value;
+
+    if (!employeeId) {
+        showStatus('Please select an employee first', 'error');
+        return;
+    }
+
+    const employee = employees.find(emp => emp.id === employeeId);
+    if (!employee) return;
+
+    const confirmMsg =
+        `⚠️ Delete employee "${employee.name}"?\n\n` +
+        `This will also delete ALL salary entries of this employee.\n` +
+        `This action cannot be undone.`;
+
+    if (!confirm(confirmMsg)) return;
+
+    // Remove employee
+    employees = employees.filter(emp => emp.id !== employeeId);
+
+    // Remove related entries
+    entries = entries.filter(entry => entry.employee !== employeeId);
+
+    saveEmployees();
+    saveEntries();
+
+    loadEmployeeList();
+    document.getElementById('wageSettingsSection').style.display = 'none';
+    document.getElementById('entriesList').innerHTML = '';
+
+    showStatus(`Employee "${employee.name}" deleted successfully`, 'success');
 }
 
 function formatDate(dateString) {
@@ -204,7 +236,10 @@ function loadBulkEntryForm() {
         return;
     }
 
-    const dailyWageEmployees = employees.filter(emp => emp.paymentType === 'daily');
+   const dailyWageEmployees = employees
+    .filter(emp => emp.paymentType === 'daily')
+    .sort((a, b) => a.name.localeCompare(b.name));
+
 
     if (dailyWageEmployees.length === 0) {
         showStatus('No daily wage employees found!', 'error');
@@ -715,7 +750,18 @@ function addEntry() {
         notes: document.getElementById('notes').value
     };
 
+    if (editingEntryId) {
+    const index = entries.findIndex(e => e.id === editingEntryId);
+    if (index !== -1) {
+        entries[index] = { ...entry, id: editingEntryId };
+        showStatus('Entry updated successfully!', 'success');
+    }
+    editingEntryId = null;
+} else {
     entries.push(entry);
+    showStatus('Entry added successfully!', 'success');
+}
+
     saveEntries();
     loadEntries();
     document.getElementById('entryForm').reset();
@@ -725,8 +771,34 @@ function addEntry() {
     otHoursInput.value = '0';
     otHoursInput.dataset.originalValue = '0';
     otHoursInput.dataset.decimalValue = '0';
+editingEntryId = null;
 
     showStatus('Entry added successfully!', 'success');
+}
+function editEntry(entryId) {
+    const entry = entries.find(e => e.id === entryId);
+    if (!entry) return;
+
+    editingEntryId = entryId;
+
+    document.getElementById('entryDate').value = entry.date;
+    document.getElementById('workDescription').value = entry.work || '';
+    document.getElementById('shift').value = entry.shift || '';
+    document.getElementById('status').value = entry.status || 'Present';
+    document.getElementById('salaryAdvance').value = entry.salaryAdvance || 0;
+    document.getElementById('advanceDate').value = entry.advanceDate || '';
+    document.getElementById('notes').value = entry.notes || '';
+
+    // OT hours
+    const otInput = document.getElementById('otHours');
+    otInput.value = entry.otHours || 0;
+    otInput.dataset.decimalValue = entry.otHours || 0;
+
+    // Piece data
+    document.getElementById('pieceNameSelect').value = entry.pieceName || '';
+    document.getElementById('piecesFinished').value = entry.piecesFinished || 0;
+
+    showStatus('Editing entry — make changes and click Add Entry to save', 'info');
 }
 
 function loadEntries() {
@@ -764,7 +836,15 @@ function loadEntries() {
                 <td>${entry.piecesFinished || '-'}</td>
                 <td>${entry.salaryAdvance}</td>
                 <td>${entry.notes}</td>
-                <td><button onclick="deleteEntry(${entry.id})" style="background:#dc3545;">Delete</button></td>
+                <td>
+    <button onclick="editEntry(${entry.id})" style="background:#ffc107; color:black;">
+        ✏️ Edit
+    </button>
+    <button onclick="deleteEntry(${entry.id})" style="background:#dc3545;">
+        🗑️ Delete
+    </button>
+</td>
+
             </tr>`;
     });
     tableHTML += `</table>`;
