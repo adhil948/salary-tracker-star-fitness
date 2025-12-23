@@ -21,15 +21,6 @@
             </div>
         </div>
 
-<div class="section backup-section">
-  <h3>☁️ Cloud Backup</h3>
-  <button id="uploadCloudBtn">☁️ Upload Backup to Cloud</button>
-<!-- Make sure your button looks like this -->
-<button onclick="restoreFromCloud()" class="btn btn-info">
-  <i class="fas fa-cloud-download-alt"></i> Restore from Cloud
-</button>
-
-</div>
 
 
         <div class="section">
@@ -39,6 +30,8 @@
                 <select id="newEmployeePaymentType">
                     <option value="daily">Daily Wage</option>
                     <option value="piece">Piece Rate</option>
+                    <option value="monthly">Monthly Salary</option>
+
                 </select>
                 <input type="number" id="newEmployeeOTRate" placeholder="OT rate per hour" value="112.5" step="0.1">
                 <button onclick="addEmployee()">Add Employee</button>
@@ -50,6 +43,10 @@
                         <option value="">-- Select Employee --</option>
                     </select>
                 </label>
+                <button onclick="deleteEmployee()" style="background:#dc3545;">
+    🗑️ Delete Employee
+</button><br />
+
                 <label>Month: <input type="month" id="monthSelector"></label>
             </div>
         </div>
