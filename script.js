@@ -33,8 +33,11 @@ function loadEmployeeList() {
 function formatDate(dateString) {
     if (!dateString) return '';
     const date = new Date(dateString);
-    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('en-IN');
+    // Return dd/mm/yyyy for en-IN
+    const d = date.getDate().toString().padStart(2, '0');
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const y = date.getFullYear();
+    return `${d}/${m}/${y}`;
 }
 
 function showStatus(message, type) {
@@ -46,154 +49,146 @@ function showStatus(message, type) {
 }
 
 // ========== OT HOURS CONVERSION ==========
-// ========== OT HOURS CONVERSION ==========
-// ========== OT HOURS CONVERSION ==========
-// ========== OT HOURS CONVERSION ==========
-// ========== OT HOURS CONVERSION ==========
 function convertOThours(inputElement) {
-    let value = inputElement.value.trim();
-    
+    let value = (inputElement.value || '').toString().trim();
+
     if (!value || value === '0') {
         inputElement.value = '0';
         inputElement.dataset.originalValue = '0';
         inputElement.dataset.decimalValue = '0';
         return 0;
     }
-    
+
     // Check if this is already a converted decimal value
     if (inputElement.dataset.decimalValue && parseFloat(inputElement.dataset.decimalValue) === parseFloat(value)) {
         return parseFloat(value);
     }
-    
+
     // Always treat as hours.minutes format
     if (value.includes('.')) {
         const parts = value.split('.');
         const hours = parseInt(parts[0]) || 0;
         let minutesStr = parts[1];
-        
+
         // Pad with zero if single digit (1.3 = 1 hour 30 minutes)
         if (minutesStr.length === 1) {
             minutesStr = minutesStr + '0';
         }
-        
+
         let minutes = parseInt(minutesStr) || 0;
-        
+
         // Handle invalid minutes (>59)
         if (minutes > 59) {
             const extraHours = Math.floor(minutes / 60);
             minutes = minutes % 60;
             const totalHours = hours + extraHours + (minutes / 60);
-            
-            // Store both original and decimal values
+
             inputElement.dataset.originalValue = value;
             inputElement.dataset.decimalValue = totalHours.toFixed(2);
             inputElement.value = totalHours.toFixed(2);
             return totalHours;
         }
-        
+
         // Normal conversion
         const decimalMinutes = minutes / 60;
         const totalHours = hours + decimalMinutes;
-        
-        // Store both original and decimal values
+
         inputElement.dataset.originalValue = value;
         inputElement.dataset.decimalValue = totalHours.toFixed(2);
         inputElement.value = totalHours.toFixed(2);
-        
+
         return totalHours;
     }
-    
+
     // If it's just a whole number, treat as hours with zero minutes
     const wholeHours = parseInt(value) || 0;
-    
-    // Store both original and decimal values
+
     inputElement.dataset.originalValue = value;
     inputElement.dataset.decimalValue = wholeHours.toFixed(2);
     inputElement.value = wholeHours.toFixed(2);
-    
+
     return wholeHours;
 }
 
 function convertBulkOThours(inputElement) {
-    let value = inputElement.value.trim();
-    
+    let value = (inputElement.value || '').toString().trim();
+
     if (!value || value === '0') {
         inputElement.value = '0';
         inputElement.dataset.originalValue = '0';
         inputElement.dataset.decimalValue = '0';
         return 0;
     }
-    
+
     // Check if this is already a converted decimal value
     if (inputElement.dataset.decimalValue && parseFloat(inputElement.dataset.decimalValue) === parseFloat(value)) {
         return parseFloat(value);
     }
-    
+
     // Always treat as hours.minutes format
     if (value.includes('.')) {
         const parts = value.split('.');
         const hours = parseInt(parts[0]) || 0;
         let minutesStr = parts[1];
-        
+
         // Pad with zero if single digit
         if (minutesStr.length === 1) {
             minutesStr = minutesStr + '0';
         }
-        
+
         let minutes = parseInt(minutesStr) || 0;
-        
+
         if (minutes > 59) {
             const extraHours = Math.floor(minutes / 60);
             minutes = minutes % 60;
             const totalHours = hours + extraHours + (minutes / 60);
-            
+
             inputElement.dataset.originalValue = value;
             inputElement.dataset.decimalValue = totalHours.toFixed(2);
             inputElement.value = totalHours.toFixed(2);
             return totalHours;
         }
-        
+
         const decimalMinutes = minutes / 60;
         const totalHours = hours + decimalMinutes;
-        
+
         inputElement.dataset.originalValue = value;
         inputElement.dataset.decimalValue = totalHours.toFixed(2);
         inputElement.value = totalHours.toFixed(2);
         return totalHours;
     }
-    
+
     // Whole number
     const wholeHours = parseInt(value) || 0;
-    
+
     inputElement.dataset.originalValue = value;
     inputElement.dataset.decimalValue = wholeHours.toFixed(2);
     inputElement.value = wholeHours.toFixed(2);
-    
+
     return wholeHours;
 }
+
 // ========== ENHANCED OT DISPLAY FUNCTIONS ==========
-// Optional: Function to display decimal hours as time format for better readability
 function formatHoursAsTime(decimalHours) {
     if (!decimalHours || decimalHours === 0) return '0h';
-    
+
     const hours = Math.floor(decimalHours);
     const minutes = Math.round((decimalHours - hours) * 60);
-    
+
     if (minutes === 0) return `${hours}h`;
     return `${hours}h ${minutes}m`;
 }
 
-// Function to convert back to time format for display (optional)
 function displayAsTimeFormat(inputElement) {
     const value = parseFloat(inputElement.value) || 0;
     if (value === 0) {
         inputElement.value = '0';
         return;
     }
-    
+
     const hours = Math.floor(value);
     const minutes = Math.round((value - hours) * 60);
-    
+
     if (minutes === 0) {
         inputElement.value = hours.toString();
     } else {
@@ -202,22 +197,20 @@ function displayAsTimeFormat(inputElement) {
 }
 
 // ========== BULK ENTRY FUNCTIONS ==========
-// ========== BULK ENTRY FUNCTIONS ==========
-// ========== BULK ENTRY FUNCTIONS ==========
 function loadBulkEntryForm() {
     const date = document.getElementById('bulkEntryDate').value;
     if (!date) {
         showStatus('Please select a date first', 'error');
         return;
     }
-    
+
     const dailyWageEmployees = employees.filter(emp => emp.paymentType === 'daily');
-    
+
     if (dailyWageEmployees.length === 0) {
         showStatus('No daily wage employees found!', 'error');
         return;
     }
-    
+
     const container = document.getElementById('bulkEntryFormContainer');
     let formHTML = `
         <h4>Bulk Daily Entries for ${formatDate(date)}</h4>
@@ -227,7 +220,7 @@ function loadBulkEntryForm() {
             <tr>
                 <th>Employee</th>
                 <th>Status</th>
-                <th>OT Hours</th>
+                <th>Total Hours Worked</th>
                 <th>Work Description</th>
                 <th>Salary/Advance</th>
                 <th>Notes</th>
@@ -247,7 +240,12 @@ function loadBulkEntryForm() {
                     </select>
                 </td>
                 <td>
-                    <input type="text" class="bulk-ot" value="0" placeholder="1.30 or 1.5" style="width: 80px;">
+                    <input type="text"
+       class="bulk-total-hours"
+       value="0"
+       placeholder="8.30 = 8h 30m"
+       style="width: 90px;">
+
                 </td>
                 <td><input type="text" class="bulk-work" placeholder="Optional work description"></td>
                 <td><input type="number" class="bulk-advance" value="0" min="0"></td>
@@ -262,82 +260,113 @@ function loadBulkEntryForm() {
 
     formHTML += `</table>
         <div style="margin-top: 15px;">
-            <button type="button" id="saveBulkEntriesBtn" style="background: #28a745;">💾 Save All Entries</button>
-            <button type="button" id="clearBulkFormBtn" style="background: #6c757d;">🗑️ Clear Form</button>
-        </div>`;
-    
+    <button type="button" onclick="markAllBulkStatus('Present')" style="background:#28a745;">✅ Mark All Present</button>
+    <button type="button" onclick="markAllBulkStatus('Absent')" style="background:#dc3545;">❌ Mark All Absent</button>
+    <br><br>
+    <button type="button" id="saveBulkEntriesBtn" style="background:#007bff;">💾 Save All Entries</button>
+    <button type="button" id="clearBulkFormBtn" style="background:#6c757d;">🗑️ Clear Form</button>
+</div>
+`;
+
     container.innerHTML = formHTML;
-    
+
     // Add event listeners
     const saveBtn = document.getElementById('saveBulkEntriesBtn');
     const clearBtn = document.getElementById('clearBulkFormBtn');
-    
+
     if (saveBtn) saveBtn.addEventListener('click', saveBulkEntries);
     if (clearBtn) clearBtn.addEventListener('click', clearBulkForm);
-    
+
     // Add real-time OT conversion
     container.addEventListener('blur', function(e) {
-        if (e.target.classList.contains('bulk-ot')) {
-            convertBulkOThours(e.target);
-        }
+if (e.target.classList.contains('bulk-total-hours')) {
+    convertBulkOThours(e.target);
+}
     }, true);
-    
+
     container.addEventListener('click', function(e) {
         if (e.target.classList.contains('remove-bulk-btn')) {
             removeEmployeeFromBulk(e.target);
         }
     });
 }
+
+function calculateBulkStatusAndOT(totalHours) {
+    totalHours = parseFloat(totalHours) || 0;
+
+    if (totalHours >= 8) {
+        return {
+            status: 'Present',
+            otHours: totalHours - 8
+        };
+    } else {
+        return {
+            status: 'Absent',
+            otHours: totalHours
+        };
+    }
+}
+
+function markAllBulkStatus(status) {
+    document.querySelectorAll('.bulk-status').forEach(select => {
+        select.value = status;
+    });
+
+    document.querySelectorAll('.bulk-total-hours').forEach(input => {
+        if (status === 'Absent') input.value = '0';
+        if (status === 'Present' && input.value === '0') input.value = '8';
+    });
+}
+
 function saveBulkEntries() {
     console.log("=== SAVE BULK ENTRIES STARTED ===");
-    
+
     const date = document.getElementById('bulkEntryDate').value;
     const container = document.getElementById('bulkEntryFormContainer');
     const rows = container.querySelectorAll('tr[data-employee-id]');
-    
+
     if (rows.length === 0) {
         showStatus('No employees remaining in the bulk entry form!', 'error');
         return;
     }
-    
+
     let entriesAdded = 0;
     const newEntries = [];
 
-    // Process each row
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const employeeId = row.dataset.employeeId;
         const employee = employees.find(emp => emp.id === employeeId);
         if (!employee) continue;
-        
-        const statusSelect = row.querySelector('.bulk-status');
-        const status = statusSelect ? statusSelect.value : 'Present';
-        
-        // Skip absent employees (no entry needed)
-        if (status === 'Absent') continue;
-        
-        const otInput = row.querySelector('.bulk-ot');
-        
-        // FIX: Use the stored decimal value instead of converting again
-        let otHours = 0;
-        if (otInput.dataset.decimalValue) {
-            // Use the pre-calculated decimal value
-            otHours = parseFloat(otInput.dataset.decimalValue);
-            console.log("Using stored decimal value:", otHours);
+
+        // 👉 TOTAL HOURS INPUT
+        const totalHoursInput = row.querySelector('.bulk-total-hours');
+
+        let totalHours = 0;
+        if (totalHoursInput.dataset.decimalValue) {
+            totalHours = parseFloat(totalHoursInput.dataset.decimalValue);
         } else {
-            // Fallback: convert if no stored value
-            otHours = convertBulkOThours(otInput);
-            console.log("Converted value:", otHours);
+            totalHours = convertBulkOThours(totalHoursInput);
         }
-        
-        const workInput = row.querySelector('.bulk-work');
-        const workDescription = workInput ? workInput.value.trim() : '';
-        
-        const advanceInput = row.querySelector('.bulk-advance');
-        const salaryAdvance = advanceInput ? parseFloat(advanceInput.value) || 0 : 0;
-        
-        const notesInput = row.querySelector('.bulk-notes');
-        const notes = notesInput ? notesInput.value.trim() : '';
+
+        // 👉 AUTO CALCULATE STATUS + OT
+        const result = calculateBulkStatusAndOT(totalHours);
+        const status = result.status;
+        const otHours = result.otHours;
+
+        // OPTIONAL: skip completely zero rows
+        if (totalHours === 0 && status === 'Absent') {
+            continue;
+        }
+
+        const workDescription =
+            row.querySelector('.bulk-work')?.value.trim() || '';
+
+        const salaryAdvance =
+            parseFloat(row.querySelector('.bulk-advance')?.value) || 0;
+
+        const notes =
+            row.querySelector('.bulk-notes')?.value.trim() || '';
 
         const entry = {
             id: Date.now() + i,
@@ -353,8 +382,7 @@ function saveBulkEntries() {
             advanceDate: salaryAdvance > 0 ? date : '',
             shift: ''
         };
-        
-        console.log("Final entry OT hours:", entry.otHours);
+
         newEntries.push(entry);
         entriesAdded++;
     }
@@ -363,23 +391,26 @@ function saveBulkEntries() {
         entries.push(...newEntries);
         saveEntries();
         loadEntries();
+
         showStatus(`✅ ${entriesAdded} bulk entries saved successfully!`, 'success');
-        
+
         setTimeout(() => {
             container.innerHTML = '';
         }, 1500);
     } else {
-        showStatus('No entries were added.', 'warning');
+        showStatus('No valid entries to save.', 'warning');
     }
 }
+
+
 function removeEmployeeFromBulk(buttonElement) {
     const row = buttonElement.closest('tr');
     const employeeName = row.querySelector('td').textContent;
-    
+
     if (confirm(`Remove ${employeeName} from bulk entry?`)) {
         row.style.transition = 'opacity 0.3s';
         row.style.opacity = '0';
-        
+
         setTimeout(() => {
             row.remove();
             updateBulkEntryCount();
@@ -392,7 +423,7 @@ function updateBulkEntryCount() {
     const container = document.getElementById('bulkEntryFormContainer');
     const remainingRows = container.querySelectorAll('tr[data-employee-id]');
     const countElement = container.querySelector('p');
-    
+
     if (countElement && remainingRows.length > 0) {
         countElement.innerHTML = `<strong>Daily Wage Employees Only</strong> (${remainingRows.length} employees remaining)`;
     }
@@ -410,7 +441,7 @@ function testBulkSave() {
     console.log("=== TESTING BULK SAVE ===");
     console.log("Employees:", employees);
     console.log("Entries before:", entries.length);
-    
+
     // Create a simple test entry
     const testEntry = {
         id: Date.now(),
@@ -426,7 +457,7 @@ function testBulkSave() {
         advanceDate: '',
         shift: ''
     };
-    
+
     if (employees.length > 0) {
         entries.push(testEntry);
         saveEntries();
@@ -447,22 +478,31 @@ function addEmployee() {
         showStatus('Please enter employee name', 'error');
         return;
     }
-    
+
     const id = name.toLowerCase().replace(/\s+/g, '_') + Date.now();
     if (employees.find(emp => emp.name.toLowerCase() === name.toLowerCase())) {
         showStatus('An employee with this name already exists!', 'error');
         return;
     }
 
+    // *** MONTHLY - include monthly fields if paymentType === 'monthly'
     const newEmployee = {
         id: id,
         name: name,
-        paymentType: paymentType,
+        paymentType: paymentType, // 'daily' | 'piece' | 'monthly'
         dailyWage: 900,
         pieces: [],
         otRate: otRate,
-        oldBalance: 0
+        oldBalance: 0,
+        // monthly-specific defaults
+        monthlySalary: paymentType === 'monthly' ? 15000 : undefined,
+        manualAbsentDays: paymentType === 'monthly' ? 0 : undefined
     };
+
+    // Ensure dailyWage is set for monthly as monthly/30
+    if (paymentType === 'monthly') {
+        newEmployee.dailyWage = parseFloat((newEmployee.monthlySalary / 30).toFixed(2));
+    }
 
     employees.push(newEmployee);
     saveEmployees();
@@ -503,6 +543,7 @@ function loadEmployeeSettings() {
         document.getElementById('oldBalance').value = employee.oldBalance;
 
         if (employee.paymentType === 'piece') {
+            // piece UI
             dailyWageLabel.style.display = 'none';
             pieceRateManagement.style.display = 'block';
             pieceNameCell.style.display = 'table-cell';
@@ -511,8 +552,31 @@ function loadEmployeeSettings() {
             piecesFinishedHeader.style.display = 'table-cell';
             renderPieceList(employee);
             populatePieceNameDropdown(employee);
+        } else if (employee.paymentType === 'monthly') {
+            // *** MONTHLY - Show monthly salary, computed daily (monthly/30), and manual absent input
+            dailyWageLabel.style.display = 'block';
+            pieceRateManagement.style.display = 'none';
+            pieceNameCell.style.display = 'none';
+            piecesFinishedCell.style.display = 'none';
+            pieceNameHeader.style.display = 'none';
+            piecesFinishedHeader.style.display = 'none';
+
+            // Build the monthly UI inside the dailyWageLabel element
+            const monthlySalaryVal = employee.monthlySalary ? employee.monthlySalary : 0;
+            const computedDaily = (monthlySalaryVal / 30) || 0;
+
+            dailyWageLabel.innerHTML = `
+                Monthly Salary: <input type="number" id="monthlySalary" value="${monthlySalaryVal}" step="0.01">
+                <br>
+                Daily (monthly/30): <input type="number" id="dailyWage" value="${computedDaily.toFixed(2)}" step="0.01" disabled>
+                <br>
+                Days Absent (manual override): <input type="number" id="manualAbsentDays" value="${employee.manualAbsentDays || 0}" min="0" max="30">
+            `;
         } else {
-            document.getElementById('dailyWage').value = employee.dailyWage;
+            // daily wage UI
+            dailyWageLabel.style.display = 'block';
+            pieceRateManagement.style.display = 'none';
+            dailyWageLabel.innerHTML = 'Daily Wage: <input type="number" id="dailyWage" value="' + (employee.dailyWage || 900) + '">';
         }
 
         wageSettingsSection.style.display = 'block';
@@ -523,14 +587,25 @@ function loadEmployeeSettings() {
 function saveEmployeeSettings() {
     const employeeId = document.getElementById('employeeSelect').value;
     const employee = employees.find(emp => emp.id === employeeId);
-    
+
     if (employee) {
         if (employee.paymentType === 'daily') {
-            employee.dailyWage = parseFloat(document.getElementById('dailyWage').value);
+            const dailyVal = parseFloat(document.getElementById('dailyWage').value) || 0;
+            employee.dailyWage = dailyVal;
+        } else if (employee.paymentType === 'monthly') {
+            // *** MONTHLY - save monthly salary and derived daily wage and manual absent days
+            const monthlyVal = parseFloat(document.getElementById('monthlySalary').value) || 0;
+            const manualAbsent = parseInt(document.getElementById('manualAbsentDays').value) || 0;
+            employee.monthlySalary = monthlyVal;
+            employee.dailyWage = parseFloat((monthlyVal / 30).toFixed(2));
+            employee.manualAbsentDays = manualAbsent;
+            // update the readonly dailyWage input to reflect change
+            const dw = document.getElementById('dailyWage');
+            if (dw) dw.value = employee.dailyWage;
         }
         employee.otRate = parseFloat(document.getElementById('otRate').value);
         employee.oldBalance = parseFloat(document.getElementById('oldBalance').value);
-        
+
         saveEmployees();
         showStatus('Settings saved for ' + employee.name, 'success');
     }
@@ -559,7 +634,7 @@ function renderPieceList(employee) {
 function addPiece() {
     const employeeId = document.getElementById('employeeSelect').value;
     const employee = employees.find(emp => emp.id === employeeId);
-    
+
     const name = document.getElementById('newPieceName').value.trim();
     const price = parseFloat(document.getElementById('newPiecePrice').value);
 
@@ -611,7 +686,7 @@ function addEntry() {
 
     // Convert OT hours before processing
     const otHoursInput = document.getElementById('otHours');
-    
+
     // FIX: Use stored decimal value instead of converting again
     let otHours = 0;
     if (otHoursInput.dataset.decimalValue) {
@@ -645,26 +720,29 @@ function addEntry() {
     loadEntries();
     document.getElementById('entryForm').reset();
     document.getElementById('entryDate').valueAsDate = new Date();
-    
+
     // Reset OT hours display and stored values
     otHoursInput.value = '0';
     otHoursInput.dataset.originalValue = '0';
     otHoursInput.dataset.decimalValue = '0';
-    
+
     showStatus('Entry added successfully!', 'success');
 }
 
 function loadEntries() {
     const month = document.getElementById('monthSelector').value;
     const employeeId = document.getElementById('employeeSelect').value;
-    
+
     if (!employeeId) {
         document.getElementById('entriesList').innerHTML = '<p>Please select an employee to see entries.</p>';
         return;
     }
 
+    // If month is empty, fallback to currentMonth
+    const effectiveMonth = month || currentMonth;
+
     const monthlyEntries = entries
-        .filter(entry => entry.employee === employeeId && entry.date.startsWith(month))
+        .filter(entry => entry.employee === employeeId && entry.date.startsWith(effectiveMonth))
         .sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const entriesList = document.getElementById('entriesList');
@@ -702,7 +780,7 @@ function deleteEntry(id) {
     }
 }
 
-// ========== BACKUP & CLOUD FUNCTIONS ==========
+// ========== BACKUP FUNCTIONS ==========
 function exportData() {
     const currentEntries = JSON.parse(localStorage.getItem('salaryEntries')) || [];
     const currentEmployees = JSON.parse(localStorage.getItem('salaryEmployees')) || [];
@@ -712,13 +790,13 @@ function exportData() {
         employees: currentEmployees,
         exportDate: new Date().toISOString(),
         app: "Star Fitness Salary Tracker",
-        version: "1.1"
+        version: "1.2"
     };
-    
+
     const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    
+
     const date = new Date().toISOString().split('T')[0];
     a.href = url;
     a.download = `star-fitness-backup-${date}.json`;
@@ -726,7 +804,7 @@ function exportData() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     showStatus('✅ Backup file downloaded successfully!', 'success');
 }
 
@@ -759,193 +837,25 @@ function handleFileImport(event) {
     event.target.value = '';
 }
 
-
-const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyE9YTFLvYC3BUOlqhhI1xkfbdlMwpieeOeK4hy0NoNZj-OUVqhL6S0NB-DJXPb-Q8PvQ/exec"; // Replace with your Apps Script URL
-
-// For GET requests (restore) - use JSONP
-// Working restore function
-async function restoreFromCloud() {
-  try {
-    console.log("Starting cloud restore...");
-    
-    // Use JSONP for restore
-    const result = await new Promise((resolve, reject) => {
-      const callbackName = 'restoreCallback_' + Date.now();
-      const script = document.createElement('script');
-      
-      window[callbackName] = function(data) {
-        console.log("Received data:", data);
-        delete window[callbackName];
-        document.body.removeChild(script);
-        resolve(data);
-      };
-
-      // Add error handling
-      script.onerror = () => {
-        delete window[callbackName];
-        document.body.removeChild(script);
-        reject(new Error('Failed to load backup data'));
-      };
-
-      script.src = CLOUD_URL + '?callback=' + callbackName;
-      document.body.appendChild(script);
-    });
-
-    console.log("Parsed result:", result);
-
-    // Check if we got valid data
-    if (!result || Object.keys(result).length === 0) {
-      alert("⚠️ No backup found in cloud");
-      return;
-    }
-
-    if (result.error) {
-      alert("❌ Error: " + result.error);
-      return;
-    }
-
-    // Handle the data structure
-    let restoredEntries = [];
-    let restoredEmployees = [];
-
-    if (result.entries && result.employees) {
-      // New format with entries and employees
-      restoredEntries = result.entries;
-      restoredEmployees = result.employees;
-    } else if (Array.isArray(result)) {
-      // Old format - just entries array
-      restoredEntries = result;
-      // Try to get employees from localStorage as fallback
-      const localData = JSON.parse(localStorage.getItem("salaryData") || "{}");
-      restoredEmployees = localData.employees || [];
-    } else {
-      // Unknown format
-      alert("❌ Invalid backup data format");
-      return;
-    }
-
-    // Update global variables
-    entries = restoredEntries;
-    employees = restoredEmployees;
-
-    // Save to localStorage using the correct keys
-    localStorage.setItem("salaryEntries", JSON.stringify(entries));
-    localStorage.setItem("salaryEmployees", JSON.stringify(employees));
-
-    // Update UI - FIXED: Use loadEmployeeList() instead of loadEmployees()
-    loadEmployeeList();
-    loadEntries();
-    
-    alert(`✅ Data restored successfully!\nEntries: ${entries.length}\nEmployees: ${employees.length}`);
-    
-  } catch (err) {
-    console.error("Restore error:", err);
-    alert("❌ Failed to restore from cloud: " + err.message);
-  }
-}
-// Keep your existing upload function (it's working)
-async function uploadToCloud() {
-  try {
-    const data = {
-      entries,
-      employees,
-      exportDate: new Date().toISOString(),
-      app: "Star Fitness Salary Tracker",
-      version: "1.1"
-    };
-    
-    // Use a CORS proxy for POST requests
-    const proxyUrl = 'https://corsproxy.io/?';
-    const response = await fetch(proxyUrl + encodeURIComponent(CLOUD_URL), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    });
-
-    const result = await response.json();
-    
-    if (result.success) {
-      alert("✅ " + result.message);
-    } else {
-      throw new Error(result.error);
-    }
-  } catch (err) {
-    console.error("Upload error:", err);
-    alert("❌ Failed to upload to cloud: " + err.message);
-  }
-}
-
-// For POST requests (upload) - use a proxy
-async function uploadToCloud() {
-  try {
-    const data = {
-      entries,
-      employees,
-      exportDate: new Date().toISOString(),
-      app: "Star Fitness Salary Tracker",
-      version: "1.1"
-    };
-    
-    // Method 1: Use a CORS proxy
-    const proxyUrl = 'https://corsproxy.io/?';
-    const response = await fetch(proxyUrl + encodeURIComponent(CLOUD_URL), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    });
-
-    const result = await response.json();
-    
-    if (result.success) {
-      alert("✅ " + result.message);
-    } else {
-      throw new Error(result.error);
-    }
-  } catch (err) {
-    console.error("Upload error:", err);
-    
-    // Method 2: Fallback - open in new window
-    const fallback = confirm("❌ Direct upload failed. Would you like to try an alternative method?");
-    if (fallback) {
-      uploadViaForm();
-    }
-  }
-}
-
-// Fallback method using form submission
-function uploadViaForm() {
-  const data = {
-    entries,
-    employees,
-    exportDate: new Date().toISOString(),
-    app: "Star Fitness Salary Tracker", 
-    version: "1.1"
-  };
-  
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = CLOUD_URL;
-  form.target = '_blank';
-  
-  const input = document.createElement('input');
-  input.name = 'data';
-  input.value = JSON.stringify(data);
-  form.appendChild(input);
-  
-  document.body.appendChild(form);
-  form.submit();
-  document.body.removeChild(form);
-  
-  alert("📤 Opening backup page... Please wait a moment for the upload to complete.");
-}
-
-// ... (Keep your existing cloud functions as they are)
-
 // ========== PRINT REPORT ==========
+
+function calculateDailyHours(entry) {
+    if (entry.status !== 'Present') return 0;
+    const ot = parseFloat(entry.otHours) || 0;
+    return 8 + ot;
+}
+
+
+function formatHoursToHM(decimalHours) {
+    if (!decimalHours || decimalHours <= 0) return '0:00';
+
+    const hours = Math.floor(decimalHours);
+    const minutes = Math.round((decimalHours - hours) * 60);
+
+    return `${hours}:${minutes.toString().padStart(2, '0')}`;
+}
+
+
 function printReport() {
     const employeeId = document.getElementById('employeeSelect').value;
     const month = document.getElementById('monthSelector').value;
@@ -954,18 +864,24 @@ function printReport() {
         return;
     }
 
+    const effectiveMonth = month || currentMonth;
     const employee = employees.find(emp => emp.id === employeeId);
-    const monthlyEntries = entries.filter(e => e.employee === employeeId && e.date.startsWith(month));
+    const monthlyEntries = entries.filter(e => e.employee === employeeId && e.date.startsWith(effectiveMonth));
 
-    const totalOTHours = monthlyEntries.reduce((sum, e) => sum + e.otHours, 0);
-    const totalAdvance = monthlyEntries.reduce((sum, e) => sum + e.salaryAdvance, 0);
+    // Ensure numeric sum for OT hours
+    const totalOTHours = monthlyEntries.reduce((sum, e) => sum + (parseFloat(e.otHours) || 0), 0);
+    const totalMonthlyHours = monthlyEntries.reduce((sum, e) => {
+    return sum + calculateDailyHours(e);
+}, 0);
+
+    const totalAdvance = monthlyEntries.reduce((sum, e) => sum + (parseFloat(e.salaryAdvance) || 0), 0);
     let earnedWages = 0;
     let summaryDetailsHTML = '';
-    
+
     if (employee.paymentType === 'piece') {
         let pieceTotal = 0;
         const pieceSummary = {};
-        
+
         monthlyEntries.forEach(entry => {
             if (entry.pieceName && entry.piecesFinished > 0) {
                 const piece = (employee.pieces || []).find(p => p.name === entry.pieceName);
@@ -978,44 +894,108 @@ function printReport() {
                 }
             }
         });
-        
+
         earnedWages = pieceTotal + (totalOTHours * employee.otRate);
         summaryDetailsHTML = '<tr><td colspan="2"><b>Piece Work Summary</b></td></tr>';
         for (const name in pieceSummary) {
             summaryDetailsHTML += `<tr><td>${name} (${pieceSummary[name].count} x ₹${pieceSummary[name].price})</td><td>₹${pieceSummary[name].count * pieceSummary[name].price}</td></tr>`;
         }
 
+    } else if (employee.paymentType === 'monthly') {
+        // *** MONTHLY - salary calculation based on entries or manual absent days
+        const monthlyDays = 30; // using fixed 30 as per requirement
+        // Count present days from entries if available
+        const presentDaysFromEntries = monthlyEntries.filter(e => e.status === 'Present').length;
+        const absentDaysFromEntries = monthlyEntries.filter(e => e.status === 'Absent').length;
+
+        // Decide which source to use for days:
+        // If user has entered any entry data for this month (present OR absent), prefer entries.
+        // Otherwise, use manualAbsentDays if set.
+        let presentDays = 0;
+        let absentDays = 0;
+        if (monthlyEntries.length > 0) {
+            presentDays = presentDaysFromEntries;
+            absentDays = absentDaysFromEntries;
+        } else {
+            absentDays = parseInt(employee.manualAbsentDays || 0);
+            if (absentDays < 0) absentDays = 0;
+            if (absentDays > monthlyDays) absentDays = monthlyDays;
+            presentDays = monthlyDays - absentDays;
+        }
+
+        const dailyRate = parseFloat(employee.dailyWage || (employee.monthlySalary ? (employee.monthlySalary/30) : 0));
+        const monthlyBase = parseFloat(employee.monthlySalary || 0);
+
+        earnedWages = (presentDays * dailyRate) + (totalOTHours * employee.otRate);
+
+        summaryDetailsHTML = `
+            <tr><td>Monthly Salary:</td><td>₹${monthlyBase.toFixed(2)}</td></tr>
+            <tr><td>Daily (Monthly/30):</td><td>₹${dailyRate.toFixed(2)}</td></tr>
+            <tr><td>Days Present:</td><td>${presentDays}</td></tr>
+            <tr><td>Days Absent:</td><td>${absentDays}</td></tr>
+            <tr><td>Total OT Hours:</td><td>${totalOTHours.toFixed(2)}</td></tr>
+        `;
+
+        // New: Total Hours Worked (for monthly employees it's useful too)
+        const totalHoursWorked = (presentDays * 8) + totalOTHours;
+        summaryDetailsHTML += `<tr><td>Total Hours Worked:</td><td>${totalHoursWorked.toFixed(2)} hours</td></tr>`;
+
     } else {
+        // default: daily wage calculation (existing behavior)
         const totalDaysWorked = monthlyEntries.filter(e => e.status === 'Present').length;
         earnedWages = (totalDaysWorked * employee.dailyWage) + (totalOTHours * employee.otRate);
         summaryDetailsHTML = `
             <tr><td>Daily Wage Rate:</td><td>₹${employee.dailyWage}</td></tr>
             <tr><td>Total Days Worked:</td><td>${totalDaysWorked}</td></tr>
+            <tr><td>Total OT Hours:</td><td>${totalOTHours.toFixed(2)}</td></tr>
+            <tr>
+    <td><b>Total Hours Worked (Month):</b></td>
+    <td><b>${formatHoursToHM(totalMonthlyHours)}</b></td>
+
+</tr>
+
         `;
+
+        // NEW: Total Hours Worked for daily employees
+        const totalHoursWorked = (totalDaysWorked * 8) + totalOTHours;
+        summaryDetailsHTML += `<tr><td>Total Hours Worked:</td><td>${totalHoursWorked.toFixed(2)} hours</td></tr>`;
     }
 
-    const netPayable = earnedWages + employee.oldBalance - totalAdvance;
+    const netPayable = earnedWages + (employee.oldBalance || 0) - totalAdvance;
 
     let reportHTML = `
         <div class="print-header">
             <h2>STAR FITNESS EQUIPMENT MANUFACTURER</h2>
-            <p><strong>Salary Sheet for: ${employee.name} - ${month}</strong></p>
+            <p><strong>Salary Sheet for: ${employee.name} - ${effectiveMonth}</strong></p>
         </div>
         <table>
-            <tr><th>Date</th><th>Work</th><th>Status</th><th>OT</th><th>Piece Name</th><th>Pieces</th><th>Advance</th><th>Notes</th></tr>`;
-    
-    monthlyEntries.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(entry => {
-        reportHTML += `
             <tr>
-                <td>${formatDate(entry.date)}</td>
-                <td>${entry.work || '-'}</td>
-                <td>${entry.status}</td>
-                <td>${entry.otHours}</td>
-                <td>${entry.pieceName || '-'}</td>
-                <td>${entry.piecesFinished || '-'}</td>
-                <td>${entry.salaryAdvance}</td>
-                <td>${entry.notes || '-'}</td>
-            </tr>`;
+    <th>Date</th>
+    <th>Work</th>
+    <th>Status</th>
+    <th>OT</th>
+    <th>Hours Worked</th>
+    <th>Piece Name</th>
+    <th>Pieces</th>
+    <th>Advance</th>
+    <th>Notes</th>
+</tr>
+`;
+
+    monthlyEntries.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(entry => {
+const dailyHours = calculateDailyHours(entry);
+reportHTML += `
+<tr>
+    <td>${formatDate(entry.date)}</td>
+    <td>${entry.work || '-'}</td>
+    <td>${entry.status}</td>
+    <td>${entry.otHours}</td>
+    <td>${formatHoursToHM(dailyHours)}</td>
+    <td>${entry.pieceName || '-'}</td>
+    <td>${entry.piecesFinished || '-'}</td>
+    <td>${entry.salaryAdvance}</td>
+    <td>${entry.notes || '-'}</td>
+</tr>`;
     });
 
     reportHTML += `
@@ -1025,10 +1005,9 @@ function printReport() {
             <table>
                 ${summaryDetailsHTML}
                 <tr><td>OT Hourly Rate:</td><td>₹${employee.otRate}</td></tr>
-                <tr><td>Total OT Hours:</td><td>${totalOTHours.toFixed(1)}</td></tr>
                 <tr><td><b>Total Earned from Work:</b></td><td><b>₹${earnedWages.toFixed(2)}</b></td></tr>
                 <tr><td>Total Advance Given:</td><td>₹${totalAdvance.toFixed(2)}</td></tr>
-                <tr><td>Old Balance:</td><td>₹${employee.oldBalance.toFixed(2)}</td></tr>
+                <tr><td>Old Balance:</td><td>₹${(employee.oldBalance || 0).toFixed(2)}</td></tr>
                 <tr><td style="font-weight: bold; font-size: 1.1em;">Net Payable:</td><td style="font-weight: bold; font-size: 1.1em;">₹${netPayable.toFixed(2)}</td></tr>
             </table>
         </div>
@@ -1060,28 +1039,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const monthSelector = document.getElementById('monthSelector');
     const entryForm = document.getElementById('entryForm');
     const fileInput = document.getElementById('fileInput');
-    const uploadCloudBtn = document.getElementById('uploadCloudBtn');
-    
+
     if (monthSelector) {
         monthSelector.value = currentMonth;
         monthSelector.addEventListener('change', loadEntries);
     }
-    
+
     if (entryForm) {
         entryForm.addEventListener('submit', function(e) {
             e.preventDefault();
             addEntry();
         });
     }
-    
+
     if (fileInput) {
         fileInput.addEventListener('change', handleFileImport);
     }
-    
-    if (uploadCloudBtn) {
-        uploadCloudBtn.addEventListener('click', uploadToCloud);
-    }
-    
+
     document.getElementById('entryDate').valueAsDate = new Date();
     loadEmployeeList();
     loadEntries();
