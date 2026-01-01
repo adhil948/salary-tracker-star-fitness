@@ -1017,8 +1017,8 @@ function printReport() {
         `;
 
         // New: Total Hours Worked (for monthly employees it's useful too)
-        // const totalHoursWorked = (presentDays * 8) + totalOTHours;
-        // summaryDetailsHTML += `<tr><td>Total Hours Worked:</td><td>${totalHoursWorked.toFixed(2)} hours</td></tr>`;
+        const totalHoursWorked = (presentDays * 8) + totalOTHours;
+        summaryDetailsHTML += `<tr><td>Total Hours Worked:</td><td>${totalHoursWorked.toFixed(2)} hours</td></tr>`;
 
     } else {
         // default: daily wage calculation (existing behavior)
@@ -1037,8 +1037,8 @@ function printReport() {
         `;
 
         // NEW: Total Hours Worked for daily employees
-        // const totalHoursWorked = (totalDaysWorked * 8) + totalOTHours;
-        // summaryDetailsHTML += `<tr><td>Total Hours Worked:</td><td>${totalHoursWorked.toFixed(2)} hours</td></tr>`;
+        const totalHoursWorked = (totalDaysWorked * 8) + totalOTHours;
+        summaryDetailsHTML += `<tr><td>Total Hours Worked:</td><td>${totalHoursWorked.toFixed(2)} hours</td></tr>`;
     }
 
     const netPayable = earnedWages + (employee.oldBalance || 0) - totalAdvance;
@@ -1140,5 +1140,4 @@ document.addEventListener('DOMContentLoaded', function() {
     loadEmployeeList();
     loadEntries();
 });
-
 
