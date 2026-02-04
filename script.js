@@ -920,9 +920,17 @@ function handleFileImport(event) {
 // ========== PRINT REPORT ==========
 
 function calculateDailyHours(entry) {
-    if (entry.status !== 'Present') return 0;
+    // Get OT hours (default to 0 if empty)
     const ot = parseFloat(entry.otHours) || 0;
-    return 8 + ot;
+
+    // Determine Base Hours:
+    // If Present, base is 8.
+    // If Absent/Holiday/Off, base is 0.
+    const baseHours = (entry.status === 'Present') ? 8 : 0;
+
+    // Total = Base + OT
+    // This ensures that if they are Absent but have OT, the OT is still counted.
+    return baseHours + ot;
 }
 
 
@@ -1140,4 +1148,3 @@ document.addEventListener('DOMContentLoaded', function() {
     loadEmployeeList();
     loadEntries();
 });
-
